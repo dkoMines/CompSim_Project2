@@ -319,7 +319,7 @@ def run1day(floors, elevatorNum, uniformFileName, days):
 
 # run1day(20,4,"uniform-0-1-00.dat", 1) # Floors, Elevators, random file, days
 def runProgram(floors, elevators, randomFileName, days):
-    run1day(floors, elevators, randomFileName, days)
+    run1day(int(floors), int(elevators), randomFileName, int(days))
 
 
 
