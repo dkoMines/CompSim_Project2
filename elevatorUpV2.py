@@ -18,10 +18,16 @@ class Event():
     def __lt__(self,other):
         if (self.time < other.time):
             return True
+        elif (self.time == other.time) and (self != other):
+            return True
         else:
             return False
-    def __eq__(self,other):
-        if self.time == other.time:
+    # def __eq__(self,other):
+    #     if self.time == other.time:
+    #         return True
+    #     return False
+    def __gt__(self,other):
+        if (self.time > other.time):
             return True
         return False
     def __repr__(self):
@@ -137,8 +143,7 @@ def run1day(floors, elevatorNum, uniformFileName, days):
         print("Random File not found")
         exit(1)
 
-    verbose = True
-    khVerbose = False
+    verbose = False
 
     # Stat collections
     stops = 0
@@ -166,35 +171,18 @@ def run1day(floors, elevatorNum, uniformFileName, days):
 
         # EVENT QUEUE SET UP
         nextEvent = Event(interarrivalTime(getRandom()),"PedArrival",None)
-        eventQueue = []
-        eventQueue.append(nextEvent)
+
         tree = AVL_Tree()
         root = None
-        root = tree.insert(root, t, len(eventQueue)-1)
+        root = tree.insert(root, nextEvent)
 
-        # while root != None:
-        while len(eventQueue) > 0:
-            # for index in currentEvents:
-            #     if eventQueue[index].time == 2078:
-            #         print("LOOK HERE ===============================================================")
-            #         print(eventQueue[index].eventType)
-            # if len(currentEvents) == 0:
-            #     node = tree.getSmallestRoot(root)
-            #     if node.val == 2078: print("2078 NODE")
-            #     for index in node.index:
-            #         currentEvents.append(index)
-            #     root = tree.delete(root, node.val)
+        # while len(eventQueue) > 0:
+        while root is not None:
+            
+            node = tree.getMinValueNode(root)
 
-
-
-            # event = eventQueue[currentEvents[0]]
-            # currentEvents.pop(0)
-            # t = event.time
-
-            eventQueue.sort()
-            event = eventQueue[0]
-            eventQueue.pop(0)
-            t = event.time
+            event = node.val
+            t = event.time            
 
             if event.eventType == "PedArrival":
                 freeElevators = []
@@ -203,8 +191,7 @@ def run1day(floors, elevatorNum, uniformFileName, days):
                         freeElevators.append(i)
                 newRiders = []
                 gn = groupNumber(getRandom(),8 if peopleToDeliver >= 8 else peopleToDeliver)
-                if verbose: print(f'Pedestrians Arriving t:{t/60} Size: {gn}')
-                if khVerbose: print(f'     {t/60}m arrival->lift ped 1 arrival {t/60}m destination floor 15')
+                if verbose: print(f'Pedestrians Arriving t:{t} Size: {gn}')
                 if verbose: print(f'    Going to floors', end=" ")
                 for i in range(gn):
                     destination = assignFloor(getRandom(), floorCount)
@@ -224,8 +211,7 @@ def run1day(floors, elevatorNum, uniformFileName, days):
                     elevators[freeElevators[0]].people.sort()
                     destinationFloor = elevators[freeElevators[0]].people[0].destination
                     newEvent = Event( t + doorTime(len(elevators[freeElevators[0]].people))+elevatorSpeed(0,destinationFloor), "ElevatorArrive", freeElevators[0])
-                    eventQueue.append(newEvent)
-                    root = tree.insert(root, newEvent.time, len(eventQueue)-1)
+                    root = tree.insert(root, newEvent)
                     elevators[freeElevators[0]].location = destinationFloor
                 else:
                     while len(newRiders) > 0: # Fill the elevators with people RR style
@@ -241,14 +227,12 @@ def run1day(floors, elevatorNum, uniformFileName, days):
                             elevators[index].people.sort()
                             destinationFloor = elevators[index].people[0].destination
                             newEvent = Event( t + doorTime(len(elevators[index].people))+elevatorSpeed(0,destinationFloor), "ElevatorArrive", index)
-                            eventQueue.append(newEvent)
-                            root = tree.insert(root, newEvent.time, len(eventQueue)-1)
+                            root = tree.insert(root, newEvent)
                             elevators[index].location = destinationFloor
                 # Start another Pedestrian Arrival Event
                 if peopleToDeliver > 0:
                     newEvent = Event(t+interarrivalTime(getRandom()), "PedArrival", None)
-                    eventQueue.append(newEvent)
-                    root = tree.insert(root, newEvent.time, len(eventQueue)-1)
+                    root = tree.insert(root, newEvent)
                 if maxq < len(lobby):
                     maxq = len(lobby)
             elif event.eventType == "ElevatorArrive":
@@ -264,15 +248,14 @@ def run1day(floors, elevatorNum, uniformFileName, days):
                         elevators[event.extra].people.sort()
                         destinationFloor = elevators[event.extra].people[0].destination
                         newEvent = Event( t + doorTime(len(elevators[event.extra].people))+elevatorSpeed(elevators[event.extra].location,destinationFloor), "ElevatorArrive", event.extra)
-                        eventQueue.append(newEvent)
-                        root = tree.insert(root, newEvent.time, len(eventQueue)-1)
+                        root = tree.insert(root, newEvent)
                         elevators[event.extra].location = destinationFloor
-                        if verbose: print(f'Elevator {event.extra} has arrived to Lobby. Bringing {len(elevators[event.extra].people)} people up to {elevators[event.extra].location} t:{t/60}')
+                        if verbose: print(f'Elevator {event.extra} has arrived to Lobby. Bringing {len(elevators[event.extra].people)} people up to {elevators[event.extra].location} t:{t}')
                     else:
-                        if verbose: print(f'Elevator {event.extra} has arrived to Lobby. No one in queue. t:{t/60}')
+                        if verbose: print(f'Elevator {event.extra} has arrived to Lobby. No one in queue. t:{t}')
                 # Not Lobby
                 else:
-                    if verbose: print(f'Elevator {event.extra} has arrived to {elevators[event.extra].location} with {len(elevators[event.extra].people)} people t:{t/60}')
+                    if verbose: print(f'Elevator {event.extra} has arrived to {elevators[event.extra].location} with {len(elevators[event.extra].people)} people t:{t}')
                     # Drop People Off
                     count = 0
                     humanBeans = []
@@ -299,16 +282,15 @@ def run1day(floors, elevatorNum, uniformFileName, days):
                     if len(elevators[event.extra].people) > 0:
                         destinationFloor = elevators[event.extra].people[0].destination
                         newEvent = Event( t + doorTime(count)+elevatorSpeed(elevators[event.extra].location,destinationFloor), "ElevatorArrive", event.extra)
-                        eventQueue.append(newEvent)
-                        root = tree.insert(root, newEvent.time, len(eventQueue)-1)
+                        root = tree.insert(root, newEvent)
                         elevators[event.extra].location = destinationFloor
                     # If No People, Go To Lobby
                     else:
                         destinationFloor = 0
                         newEvent = Event( t + doorTime(count)+elevatorSpeed(elevators[event.extra].location,destinationFloor), "ElevatorArrive", event.extra)
-                        eventQueue.append(newEvent)
-                        root = tree.insert(root, newEvent.time, len(eventQueue)-1)
+                        root = tree.insert(root, newEvent)
                         elevators[event.extra].location = -1 # Set to -1 to indicate it is travelling to 0 and people can't get on until it reaches 0
+            root = tree.delete(root, node.val)
         if verbose: print(f'==== Day {day+1} Complete ====')
 
     print(f'OUTPUT stops  {(stops/days/elevatorNum):.5f}')
@@ -319,6 +301,3 @@ def run1day(floors, elevatorNum, uniformFileName, days):
 # run1day(20,4,"uniform-0-1-00.dat", 1) # Floors, Elevators, random file, days
 def runProgram(floors, elevators, randomFileName, days):
     run1day(int(floors), int(elevators), randomFileName, int(days))
-
-
-

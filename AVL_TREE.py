@@ -2,27 +2,24 @@
 # Python code to delete a node in AVL tree 
 # Generic tree node class 
 class TreeNode(object): 
-    def __init__(self, val, index): 
+    def __init__(self, val): 
         self.val = val 
         self.left = None
         self.right = None
         self.height = 1
-        self.index = [index]
 
 # AVL tree class which supports insertion, 
 # deletion operations 
 class AVL_Tree(object): 
 
-    def insert(self, root, key, index):
+    def insert(self, root, key):
         # Step 1 - Perform normal BST 
         if not root: 
-            return TreeNode(key, index)
-        elif key == root.val:
-            root.index.append(index) 
+            return TreeNode(key) 
         elif key < root.val: 
-            root.left = self.insert(root.left, key, index) 
-        elif key > root.val: 
-            root.right = self.insert(root.right, key, index) 
+            root.left = self.insert(root.left, key) 
+        else: 
+            root.right = self.insert(root.right, key)
 
         # Step 2 - Update the height of the 
         # ancestor node 
@@ -57,12 +54,7 @@ class AVL_Tree(object):
     # Recursive function to delete a node with 
     # given key from subtree with given root. 
     # It returns root of the modified subtree. 
-    def delete(self, root, key): 
-        if key==2078:
-            print("DELETE")
-        if 328 in root.index:
-            print("328 being deleted here time = ", key)
-            # input()
+    def delete(self, root, key):
         # Step 1 - Perform standard BST delete 
         if not root: 
             return root 
