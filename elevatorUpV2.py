@@ -1,4 +1,5 @@
 from numpy import random
+import numpy as np
 import math
 from AVL_TREE import AVL_Tree
 import collections
@@ -60,7 +61,6 @@ def groupNumber(u, maxGroupNumber):
     return cdfModificationAndSearch(u,maxGroupNumber)
 
 def interarrivalTime(u):
-    return 0.233936859275504*60
     return constrainedInversion(u)
 
 def assignFloor(u, floorCount):
@@ -75,10 +75,6 @@ def assignFloor(u, floorCount):
             if j==0:
                 return floor
 
-def exponentialDistribution(x):
-    mu = 10
-    return 1-math.pow(math.e,(-x/mu))/mu
-
 def geometricDistribution(x):
     p = 0.65
     return 1-math.pow(p,x+1)
@@ -91,6 +87,7 @@ def cdfModificationAndSearch(u,b):
     a = 1
     alpha = geometricDistribution(a-1)
     beta = geometricDistribution(b)
+    # TODO check if its b+a or b-a
     d = int((b+a)//2)
     if getFt(d,alpha,beta) <= u:
         while getFt(d,alpha,beta) <= u:
@@ -102,21 +99,24 @@ def cdfModificationAndSearch(u,b):
         d = a
     return d
 
-def idfExponential(x, u):
+def exponentialDistribution(x):
     mu = 10
-    rv = -mu*math.log(1-u)
-    if rv > 90: rv = 90
-    if rv < 2: rv = 2
+    return 1-math.pow(math.e,(-x/mu))
+
+
+def idfExponential(u):
+    mu = 10
+    rv = -mu*np.log(1-u)
     return rv
 
 
 def constrainedInversion(u):
     a = 2
     b = 90
-    alpha = exponentialDistribution(a-1)
+    alpha = exponentialDistribution(a)
     beta = 1.0-exponentialDistribution(b)
-    (u * (beta-alpha)) + alpha
-    d = idfExponential((b-a)/2, u)
+    u = (u * (1-beta-alpha)) + alpha
+    d = idfExponential(u)
     return d
 
 def getRandom():
@@ -145,7 +145,8 @@ def run1day(floors, elevatorNum, uniformFileName, days):
     stops = 0
     maxq = 0
     avgDelay = 0
-    stdDelay = 0
+    vDelay = 0
+    statCounter = 0
 
     for day in range(days):
         # Helper Variables
@@ -205,7 +206,7 @@ def run1day(floors, elevatorNum, uniformFileName, days):
                 gn = groupNumber(getRandom(),8 if peopleToDeliver >= 8 else peopleToDeliver)
                 if verbose: print(f'Pedestrians Arriving t:{t/60} Size: {gn}')
                 if khVerbose: print(f'     {t/60}m arrival->lift ped 1 arrival {t/60}m destination floor 15')
-                # if verbose: print(f'    Going to floors', end=" ")
+                if verbose: print(f'    Going to floors', end=" ")
                 for i in range(gn):
                     destination = assignFloor(getRandom(), floorCount)
                     newRider = Person(t,destination)
@@ -287,6 +288,13 @@ def run1day(floors, elevatorNum, uniformFileName, days):
                         # Calculate delay stats here
                         delay = human.getDelay(t+dt)
                         # if verbose: print(f'    delay={delay}')
+                        statCounter += 1
+                        # Welford's Standard Deviation
+                        # vi     =   vi-1   + i-1/i                           * (x - x_bar-1)**2
+                        vDelay = vDelay + (statCounter - 1) / statCounter * (delay-avgDelay)**2
+                        # Welford's Average
+                        # xi     =  xi-1    + 1/i            *   x       - x_bar-1
+                        avgDelay = avgDelay + (1/statCounter) * (delay - avgDelay)
                     if verbose: print(f'    {count} People got off')
                     # If More People, Go Up
                     if len(elevators[event.extra].people) > 0:
@@ -306,15 +314,12 @@ def run1day(floors, elevatorNum, uniformFileName, days):
 
     print(f'OUTPUT stops  {stops/days/elevatorNum}')
     print(f'OUTPUT max qsize {maxq}')
-    print(f'OUTPUT average delay 2.53616')
-    print(f'OUTPUT stddev delay 1.79071')
+    print(f'OUTPUT average delay {avgDelay}')
+    print(f'OUTPUT stddev delay {math.sqrt(vDelay/statCounter)}')
 
 # run1day(20,4,"uniform-0-1-00.dat", 1) # Floors, Elevators, random file, days
-# print(cdfModificationAndSearch(0.7,8))
+def runProgram(floors, elevators, randomFileName, days):
+    run1day(floors, elevators, randomFileName, days)
 
-# print(constrainedInversion(0.7))
-print(assignFloor(0.7,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]))
-print(assignFloor(0.7,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1]))
-print(assignFloor(0.7,[1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1]))
-print(assignFloor(0.7,[1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1]))
-print(assignFloor(0.7,[1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,1,1,1,1,1]))
+
+
