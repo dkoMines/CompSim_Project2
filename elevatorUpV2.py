@@ -120,7 +120,6 @@ def constrainedInversion(u):
     return d
 
 def getRandom():
-    return 0.70
     global uniforms
     line = uniforms.readline()
     try:
@@ -312,10 +311,10 @@ def run1day(floors, elevatorNum, uniformFileName, days):
                         elevators[event.extra].location = -1 # Set to -1 to indicate it is travelling to 0 and people can't get on until it reaches 0
         if verbose: print(f'==== Day {day+1} Complete ====')
 
-    print(f'OUTPUT stops  {stops/days/elevatorNum}')
+    print(f'OUTPUT stops  {(stops/days/elevatorNum):.5f}')
     print(f'OUTPUT max qsize {maxq}')
-    print(f'OUTPUT average delay {avgDelay}')
-    print(f'OUTPUT stddev delay {math.sqrt(vDelay/statCounter)}')
+    print(f'OUTPUT average delay {avgDelay:.5f}')
+    print(f'OUTPUT stddev delay {(math.sqrt(vDelay/statCounter)):.5f}')
 
 # run1day(20,4,"uniform-0-1-00.dat", 1) # Floors, Elevators, random file, days
 def runProgram(floors, elevators, randomFileName, days):

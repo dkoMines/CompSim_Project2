@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
 import sys
-import main
+import elevatorUpV2
 
 if __name__ == '__main__':
-	elevatorUpV2.runProgram(sys.argv[1],sys.argv[2],sys.argv[3])
+	elevatorUpV2.runProgram(sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4])
+
+
